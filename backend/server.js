@@ -18,6 +18,10 @@ import { tmdbLimiter, generalLimiter } from "./middleware/rateLimiter.js";
 
 const app = express();
 
+// Trust the first proxy (Render, Vercel, Heroku, etc.) so express-rate-limit
+// reads the real client IP from X-Forwarded-For instead of the proxy's IP.
+app.set("trust proxy", 1);
+
 const PORT = ENV_VARS.PORT;
 const __dirname = path.resolve();
 
