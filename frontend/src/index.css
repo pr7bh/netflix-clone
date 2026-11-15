@@ -17,6 +17,13 @@
 	--transition-std: 200ms ease;
 }
 
+/* ─── Auth landing page hero ─────────────────────────────────────────────── */
+.hero-bg {
+	background-image: url('/hero.png');
+	background-size: cover;
+	background-position: center;
+}
+
 /* ─── Base ───────────────────────────────────────────────────────────────── */
 html { scroll-behavior: smooth; }
 
