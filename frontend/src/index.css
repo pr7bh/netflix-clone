@@ -77,6 +77,15 @@ html::-webkit-scrollbar { display: none; }
 	z-index: 10;
 }
 
+/* ─── Netflix-style hover preview card ───────────────────────────────────── */
+@keyframes card-preview-in {
+	from { opacity: 0; transform: scale(0.88); }
+	to   { opacity: 1; transform: scale(1); }
+}
+.card-preview {
+	animation: card-preview-in 0.18s ease-out;
+}
+
 /* ─── Navbar transparent → dark ─────────────────────────────────────────── */
 .navbar-transparent { background: transparent; }
 .navbar-dark {

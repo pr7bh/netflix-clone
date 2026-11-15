@@ -16,10 +16,29 @@ const LABEL_MAP = {
 	on_the_air: "Currently Airing",
 };
 
+const BACKDROP_BASE = "https://image.tmdb.org/t/p/w780";
+const PREVIEW_W = 300;
+
 const MovieCard = ({ item, contentType }) => {
+	const cardRef = useRef(null);
+	const hoverTimer = useRef(null);
+	const leaveTimer = useRef(null);
+	const trailerCache = useRef({});
+
+	const [expanded, setExpanded] = useState(false);
+	const [trailerKey, setTrailerKey] = useState(null);
+	const [rect, setRect] = useState(null);
+
 	const { activeProfile } = useProfileStore();
 	const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useUserDataStore();
 	const inList = isInWatchlist(item.id);
+
+	useEffect(() => {
+		return () => {
+			clearTimeout(hoverTimer.current);
+			clearTimeout(leaveTimer.current);
+		};
+	}, []);
 
 	const handleList = (e) => {
 		e.preventDefault();
@@ -37,56 +56,157 @@ const MovieCard = ({ item, contentType }) => {
 		}
 	};
 
+	const openPreview = () => {
+		const r = cardRef.current?.getBoundingClientRect();
+		if (!r) return;
+		setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+		setExpanded(true);
+
+		const cacheKey = `${contentType}-${item.id}`;
+		if (cacheKey in trailerCache.current) {
+			setTrailerKey(trailerCache.current[cacheKey] || null);
+			return;
+		}
+
+		axios
+			.get(`/api/v1/${contentType}/${item.id}/trailers`)
+			.then((res) => {
+				const trailers = res.data.trailers || [];
+				const t =
+					trailers.find((v) => v.type === "Trailer" && v.site === "YouTube") ||
+					trailers.find((v) => v.site === "YouTube");
+				const key = t?.key || "";
+				trailerCache.current[cacheKey] = key;
+				setTrailerKey(key || null);
+			})
+			.catch(() => {
+				trailerCache.current[cacheKey] = "";
+			});
+	};
+
+	const handleMouseEnter = () => {
+		clearTimeout(leaveTimer.current);
+		hoverTimer.current = setTimeout(openPreview, 600);
+	};
+
+	const handleMouseLeave = () => {
+		clearTimeout(hoverTimer.current);
+		leaveTimer.current = setTimeout(() => {
+			setExpanded(false);
+			setTrailerKey(null);
+			setRect(null);
+		}, 150);
+	};
+
+	const getPreviewStyle = () => {
+		if (!rect) return {};
+		const videoH = PREVIEW_W * (9 / 16);
+		const infoH = 108;
+		const totalH = videoH + infoH;
+
+		let left = rect.left + rect.width / 2 - PREVIEW_W / 2;
+		left = Math.max(8, Math.min(left, window.innerWidth - PREVIEW_W - 8));
+
+		let top = rect.top + rect.height / 2 - totalH / 2;
+		top = Math.max(70, Math.min(top, window.innerHeight - totalH - 8));
+
+		return { position: "fixed", left, top, width: PREVIEW_W, zIndex: 100 };
+	};
+
 	const year = (item.release_date || item.first_air_date)?.split("-")[0];
+	const match = item.vote_average > 0
+		? Math.round(item.vote_average * 10) + "% Match"
+		: null;
 
 	return (
-		<Link
-			to={`/watch/${contentType}/${item.id}`}
-			className='relative flex-none w-[160px] sm:w-[180px] group rounded-md overflow-hidden block'
+		<div
+			ref={cardRef}
+			className='relative flex-none w-[160px] sm:w-[180px]'
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}
 		>
-			{/* Poster */}
-			<div className='aspect-[2/3] overflow-hidden rounded-md bg-zinc-800'>
-				{item.poster_path ? (
-					<img
-						src={SMALL_IMG_BASE_URL + item.poster_path}
-						alt={item.title || item.name}
-						className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
-						loading='lazy'
-					/>
-				) : item.backdrop_path ? (
-					<img
-						src={SMALL_IMG_BASE_URL + item.backdrop_path}
-						alt={item.title || item.name}
-						className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
-						loading='lazy'
-					/>
-				) : (
-					<div className='w-full h-full flex items-center justify-center text-gray-500 text-xs text-center p-2'>
-						{item.title || item.name}
-					</div>
-				)}
-			</div>
+			<Link
+				to={`/watch/${contentType}/${item.id}`}
+				className='block rounded-md overflow-hidden'
+			>
+				<div className='aspect-[2/3] bg-zinc-800'>
+					{item.poster_path || item.backdrop_path ? (
+						<img
+							src={SMALL_IMG_BASE_URL + (item.poster_path || item.backdrop_path)}
+							alt={item.title || item.name}
+							className='w-full h-full object-cover'
+							loading='lazy'
+						/>
+					) : (
+						<div className='w-full h-full flex items-center justify-center text-gray-500 text-xs text-center p-2'>
+							{item.title || item.name}
+						</div>
+					)}
+				</div>
+			</Link>
 
-			{/* Hover overlay */}
-			<div className='absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent
-				opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md'>
-				<div className='absolute bottom-0 left-0 right-0 p-2.5'>
-					<p className='text-white text-xs font-semibold truncate mb-1'>{item.title || item.name}</p>
-					{year && <p className='text-gray-400 text-xs mb-2'>{year}</p>}
-					<div className='flex items-center gap-1.5'>
-						<span className='flex items-center justify-center bg-white hover:bg-white/90 text-black rounded-full size-7 transition-colors'>
-							<Play className='size-3 fill-black' />
-						</span>
-						<button
-							onClick={handleList}
-							className='flex items-center justify-center bg-zinc-700/80 hover:bg-zinc-600 text-white rounded-full size-7 border border-white/20 transition-colors'
-						>
-							{inList ? <Check className='size-3' /> : <Plus className='size-3' />}
-						</button>
+			{expanded && rect && (
+				<div
+					style={getPreviewStyle()}
+					className='card-preview rounded-xl overflow-hidden shadow-2xl bg-zinc-900 border border-white/10'
+					onMouseEnter={() => clearTimeout(leaveTimer.current)}
+					onMouseLeave={handleMouseLeave}
+				>
+					{/* Video / backdrop */}
+					<div className='relative aspect-video bg-zinc-950'>
+						{trailerKey ? (
+							<iframe
+								src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&mute=1&controls=0&modestbranding=1&loop=1&playlist=${trailerKey}&rel=0&iv_load_policy=3`}
+								className='w-full h-full'
+								allow='autoplay; encrypted-media'
+								title={item.title || item.name}
+							/>
+						) : (
+							<img
+								src={BACKDROP_BASE + (item.backdrop_path || item.poster_path)}
+								alt={item.title || item.name}
+								className='w-full h-full object-cover'
+							/>
+						)}
+						<div className='absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-zinc-900 to-transparent pointer-events-none' />
+					</div>
+
+					{/* Info */}
+					<div className='px-3 pt-2 pb-3'>
+						<div className='flex items-center gap-2 mb-2'>
+							<Link
+								to={`/watch/${contentType}/${item.id}`}
+								onClick={(e) => e.stopPropagation()}
+								className='flex items-center justify-center bg-white hover:bg-white/90 text-black rounded-full size-8 transition-colors flex-shrink-0'
+							>
+								<Play className='size-4 fill-black' />
+							</Link>
+							<button
+								onClick={handleList}
+								className='flex items-center justify-center bg-zinc-700 hover:bg-zinc-600 text-white rounded-full size-8 border border-white/30 transition-colors flex-shrink-0'
+							>
+								{inList ? <Check className='size-4' /> : <Plus className='size-4' />}
+							</button>
+							{match && (
+								<span className='ml-auto text-xs font-semibold text-green-400 truncate'>{match}</span>
+							)}
+						</div>
+						<p className='text-white text-sm font-semibold truncate mb-0.5'>
+							{item.title || item.name}
+						</p>
+						<div className='flex items-center gap-2 text-xs text-gray-400'>
+							{year && <span>{year}</span>}
+							{item.vote_average > 0 && (
+								<>
+									<span>·</span>
+									<span>★ {item.vote_average.toFixed(1)}</span>
+								</>
+							)}
+						</div>
 					</div>
 				</div>
-			</div>
-		</Link>
+			)}
+		</div>
 	);
 };
 
@@ -134,7 +254,6 @@ const MovieSlider = ({ category }) => {
 					))}
 			</div>
 
-			{/* Nav arrows */}
 			{showArrows && content.length > 4 && (
 				<>
 					<button
