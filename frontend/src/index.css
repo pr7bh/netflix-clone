@@ -33,8 +33,9 @@ body {
 	-webkit-font-smoothing: antialiased;
 }
 
-/* ─── Custom scrollbar ───────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ─── Hide main scrollbar ────────────────────────────────────────────────── */
+html { scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #3f3f3f; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #555; }
