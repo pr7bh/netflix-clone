@@ -8,6 +8,7 @@ import { useProfileStore } from "../store/profileStore";
 const Navbar = () => {
 	const [scrolled, setScrolled] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
+	const [profileOpen, setProfileOpen] = useState(false);
 	const { user, logout } = useAuthStore();
 	const { setContentType } = useContentStore();
 	const { activeProfile, clearActiveProfile } = useProfileStore();
@@ -19,14 +20,26 @@ const Navbar = () => {
 		return () => window.removeEventListener("scroll", onScroll);
 	}, []);
 
+	// Close profile dropdown on click outside
+	useEffect(() => {
+		if (!profileOpen) return;
+		const close = (e) => {
+			if (!e.target.closest("[data-profile-dropdown]")) setProfileOpen(false);
+		};
+		document.addEventListener("mousedown", close);
+		return () => document.removeEventListener("mousedown", close);
+	}, [profileOpen]);
+
 	const handleSwitchProfile = () => {
 		setMobileOpen(false);
+		setProfileOpen(false);
 		clearActiveProfile();
 		navigate("/profiles");
 	};
 
 	const handleLogout = () => {
 		setMobileOpen(false);
+		setProfileOpen(false);
 		clearActiveProfile();
 		logout();
 	};
@@ -66,15 +79,18 @@ const Navbar = () => {
 					</Link>
 
 					{/* Profile dropdown */}
-					<div className='relative group hidden sm:block'>
+					<div className='relative hidden sm:block' data-profile-dropdown>
 						<img
 							src={activeProfile?.avatar || user?.image || "/avatar1.png"}
 							alt='Profile'
-							className='h-8 w-8 rounded object-cover cursor-pointer ring-2 ring-transparent group-hover:ring-white/60 transition-all'
+							onClick={() => setProfileOpen((o) => !o)}
+							className={`h-8 w-8 rounded object-cover cursor-pointer ring-2 transition-all ${
+								profileOpen ? "ring-white/80" : "ring-transparent hover:ring-white/60"
+							}`}
 						/>
-						<div className='absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-white/10 rounded-lg
-							shadow-2xl py-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
-							transition-all duration-200 origin-top-right scale-95 group-hover:scale-100'>
+						<div className={`absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-white/10 rounded-lg
+							shadow-2xl py-1 transition-all duration-200 origin-top-right
+							${profileOpen ? "opacity-100 pointer-events-auto scale-100" : "opacity-0 pointer-events-none scale-95"}`}>
 							{activeProfile && (
 								<div className='px-4 py-2.5 border-b border-white/10'>
 									<p className='text-white font-medium text-sm truncate'>{activeProfile.name}</p>
