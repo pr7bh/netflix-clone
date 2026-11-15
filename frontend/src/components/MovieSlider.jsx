@@ -244,34 +244,39 @@ const MovieSlider = ({ category }) => {
 				{label} <span className='text-gray-400 font-normal text-base'>{typeSuffix}</span>
 			</h2>
 
-			<div className='flex gap-3 overflow-x-auto scrollbar-hide pb-2' ref={sliderRef}>
-				{isLoading
-					? Array.from({ length: 8 }).map((_, i) => (
-						<div key={i} className='flex-none w-[160px] sm:w-[180px] aspect-[2/3] rounded-md shimmer' />
-					))
-					: content.map((item) => (
-						<MovieCard key={item.id} item={item} contentType={contentType} />
-					))}
-			</div>
+			<div className='relative'>
+				<div className='flex gap-3 overflow-x-auto scrollbar-hide pb-2' ref={sliderRef}>
+					{isLoading
+						? Array.from({ length: 8 }).map((_, i) => (
+							<div key={i} className='flex-none w-[160px] sm:w-[180px] aspect-[2/3] rounded-md shimmer' />
+						))
+						: content.map((item) => (
+							<MovieCard key={item.id} item={item} contentType={contentType} />
+						))}
+				</div>
 
-			{showArrows && content.length > 4 && (
-				<>
-					<button
-						onClick={scrollLeft}
-						className='absolute left-0 top-[55%] -translate-y-1/2 h-24 w-10 flex items-center justify-center
-							bg-black/60 hover:bg-black/80 text-white transition-colors z-10 rounded-r-md'
-					>
-						<ChevronLeft className='size-6' />
-					</button>
-					<button
-						onClick={scrollRight}
-						className='absolute right-0 top-[55%] -translate-y-1/2 h-24 w-10 flex items-center justify-center
-							bg-black/60 hover:bg-black/80 text-white transition-colors z-10 rounded-l-md'
-					>
-						<ChevronRight className='size-6' />
-					</button>
-				</>
-			)}
+				{/* Left arrow — full-height gradient */}
+				<button
+					onClick={scrollLeft}
+					className={`absolute left-0 inset-y-0 w-14 sm:w-16 flex items-center justify-center
+						bg-gradient-to-r from-zinc-950/95 via-zinc-950/50 to-transparent
+						text-white z-10 transition-opacity duration-200
+						${showArrows && content.length > 4 ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+				>
+					<ChevronLeft className='size-8 drop-shadow-xl' />
+				</button>
+
+				{/* Right arrow — full-height gradient */}
+				<button
+					onClick={scrollRight}
+					className={`absolute right-0 inset-y-0 w-14 sm:w-16 flex items-center justify-center
+						bg-gradient-to-l from-zinc-950/95 via-zinc-950/50 to-transparent
+						text-white z-10 transition-opacity duration-200
+						${showArrows && content.length > 4 ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+				>
+					<ChevronRight className='size-8 drop-shadow-xl' />
+				</button>
+			</div>
 		</div>
 	);
 };
