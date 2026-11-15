@@ -44,18 +44,15 @@ export async function signup(req, res) {
 			password: hashedPassword,
 			username,
 			image,
+			profiles: [{ name: username, avatar: image }],
 		});
 
 		generateTokenAndSetCookie(newUser._id, res);
 		await newUser.save();
 
-		res.status(201).json({
-			success: true,
-			user: {
-				...newUser._doc,
-				password: "",
-			},
-		});
+		const userObj = newUser.toObject();
+		delete userObj.password;
+		res.status(201).json({ success: true, user: userObj });
 	} catch (error) {
 		console.log("Error in signup controller", error.message);
 		res.status(500).json({ success: false, message: "Internal server error" });
@@ -83,13 +80,9 @@ export async function login(req, res) {
 
 		generateTokenAndSetCookie(user._id, res);
 
-		res.status(200).json({
-			success: true,
-			user: {
-				...user._doc,
-				password: "",
-			},
-		});
+		const userObj = user.toObject();
+		delete userObj.password;
+		res.status(200).json({ success: true, user: userObj });
 	} catch (error) {
 		console.log("Error in login controller", error.message);
 		res.status(500).json({ success: false, message: "Internal server error" });
@@ -108,7 +101,6 @@ export async function logout(req, res) {
 
 export async function authCheck(req, res) {
 	try {
-		console.log("req.user:", req.user);
 		res.status(200).json({ success: true, user: req.user });
 	} catch (error) {
 		console.log("Error in authCheck controller", error.message);

@@ -1,96 +1,109 @@
 import { Link } from "react-router-dom";
+import { Info, Play, Star } from "lucide-react";
+import { useState } from "react";
 import Navbar from "../../components/Navbar";
-import { Info, Play } from "lucide-react";
 import useGetTrendingContent from "../../hooks/useGetTrendingContent";
 import { MOVIE_CATEGORIES, ORIGINAL_IMG_BASE_URL, TV_CATEGORIES } from "../../utils/constants";
 import { useContentStore } from "../../store/content";
 import MovieSlider from "../../components/MovieSlider";
-import { useState } from "react";
+import ContinueWatchingRow from "../../components/ContinueWatchingRow";
+import WatchlistButton from "../../components/WatchlistButton";
 
 const HomeScreen = () => {
 	const { trendingContent } = useGetTrendingContent();
 	const { contentType } = useContentStore();
-	const [imgLoading, setImgLoading] = useState(true);
+	const [imgLoaded, setImgLoaded] = useState(false);
 
-	if (!trendingContent)
-		return (
-			<div className='h-screen text-white relative'>
-				<Navbar />
-				<div className='absolute top-0 left-0 w-full h-full bg-black/70 flex items-center justify-center -z-10 shimmer' />
-			</div>
-		);
+	const year = trendingContent?.release_date?.split("-")[0] || trendingContent?.first_air_date?.split("-")[0];
+	const rating = trendingContent?.vote_average;
+	const overview = trendingContent?.overview?.length > 220
+		? trendingContent.overview.slice(0, 220) + "…"
+		: trendingContent?.overview;
 
 	return (
-		<>
-			<div className='relative h-screen text-white '>
-				<Navbar />
+		<div className='min-h-screen bg-zinc-950'>
+			<Navbar />
 
-				{/* COOL OPTIMIZATION HACK FOR IMAGES */}
-				{imgLoading && (
-					<div className='absolute top-0 left-0 w-full h-full bg-black/70 flex items-center justify-center shimmer -z-10' />
+			{/* ── Hero ── */}
+			<div className='relative h-[85vh] min-h-[500px] overflow-hidden'>
+				{!imgLoaded && (
+					<div className='absolute inset-0 shimmer' />
+				)}
+				{trendingContent?.backdrop_path && (
+					<img
+						src={ORIGINAL_IMG_BASE_URL + trendingContent.backdrop_path}
+						alt={trendingContent?.title || trendingContent?.name}
+						className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+						onLoad={() => setImgLoaded(true)}
+					/>
 				)}
 
-				<img
-					src={ORIGINAL_IMG_BASE_URL + trendingContent?.backdrop_path}
-					alt='Hero img'
-					className='absolute top-0 left-0 w-full h-full object-cover -z-50'
-					onLoad={() => {
-						setImgLoading(false);
-					}}
-				/>
+				{/* Gradient overlays */}
+				<div className='absolute inset-0 hero-gradient' />
+				<div className='absolute bottom-0 left-0 right-0 h-40 hero-bottom-fade' />
+				<div className='absolute inset-0 bg-black/20' />
 
-				<div className='absolute top-0 left-0 w-full h-full bg-black/50 -z-50' aria-hidden='true' />
+				{/* Hero content */}
+				<div className='relative h-full flex items-end pb-20 px-6 sm:px-12 lg:px-20'>
+					<div className='max-w-2xl fade-in'>
+						{/* Type badge */}
+						<span className='inline-block text-xs font-semibold tracking-widest uppercase text-red-500 mb-3'>
+							{contentType === "movie" ? "Featured Movie" : "Featured Series"}
+						</span>
 
-				<div className='absolute top-0 left-0 w-full h-full flex flex-col justify-center px-8 md:px-16 lg:px-32'>
-					<div
-						className='bg-gradient-to-b from-black via-transparent to-transparent 
-					absolute w-full h-full top-0 left-0 -z-10'
-					/>
-
-					<div className='max-w-2xl'>
-						<h1 className='mt-4 text-6xl font-extrabold text-balance'>
+						<h1 className='text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-balance mb-3'>
 							{trendingContent?.title || trendingContent?.name}
 						</h1>
-						<p className='mt-2 text-lg'>
-							{trendingContent?.release_date?.split("-")[0] ||
-								trendingContent?.first_air_date.split("-")[0]}{" "}
-							| {trendingContent?.adult ? "18+" : "PG-13"}
-						</p>
 
-						<p className='mt-4 text-lg'>
-							{trendingContent?.overview.length > 200
-								? trendingContent?.overview.slice(0, 200) + "..."
-								: trendingContent?.overview}
-						</p>
-					</div>
+						{/* Meta */}
+						<div className='flex flex-wrap items-center gap-3 text-sm text-gray-300 mb-4'>
+							{year && <span>{year}</span>}
+							{rating > 0 && (
+								<span className='flex items-center gap-1'>
+									<Star className='size-3.5 fill-yellow-400 text-yellow-400' />
+									{rating.toFixed(1)}
+								</span>
+							)}
+							{trendingContent?.adult
+								? <span className='border border-red-600/70 text-red-400 text-xs px-1.5 py-0.5 rounded'>18+</span>
+								: <span className='border border-gray-500 text-gray-400 text-xs px-1.5 py-0.5 rounded'>PG-13</span>
+							}
+						</div>
 
-					<div className='flex mt-8'>
-						<Link
-							to={`/watch/${trendingContent?.id}`}
-							className='bg-white hover:bg-white/80 text-black font-bold py-2 px-4 rounded mr-4 flex
-							 items-center'
-						>
-							<Play className='size-6 mr-2 fill-black' />
-							Play
-						</Link>
+						{overview && (
+							<p className='text-gray-300 leading-relaxed mb-6 text-sm sm:text-base max-w-lg'>
+								{overview}
+							</p>
+						)}
 
-						<Link
-							to={`/watch/${trendingContent?.id}`}
-							className='bg-gray-500/70 hover:bg-gray-500 text-white py-2 px-4 rounded flex items-center'
-						>
-							<Info className='size-6 mr-2' />
-							More Info
-						</Link>
+						<div className='flex flex-wrap gap-3'>
+							<Link
+								to={`/watch/${contentType}/${trendingContent?.id}`}
+								className='flex items-center gap-2 bg-white hover:bg-white/90 text-black font-bold py-2.5 px-6 rounded-md text-sm transition-colors'
+							>
+								<Play className='size-5 fill-black' />Play
+							</Link>
+							<Link
+								to={`/watch/${contentType}/${trendingContent?.id}`}
+								className='flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-semibold py-2.5 px-6 rounded-md text-sm backdrop-blur-sm transition-colors'
+							>
+								<Info className='size-5' />More Info
+							</Link>
+							<WatchlistButton content={trendingContent} contentType={contentType} />
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div className='flex flex-col gap-10 bg-black py-10'>
+			{/* ── Content rows ── */}
+			<div className='relative z-10 -mt-8 pb-16 flex flex-col gap-10 bg-gradient-to-b from-transparent to-zinc-950'>
+				<ContinueWatchingRow />
 				{contentType === "movie"
-					? MOVIE_CATEGORIES.map((category) => <MovieSlider key={category} category={category} />)
-					: TV_CATEGORIES.map((category) => <MovieSlider key={category} category={category} />)}
+					? MOVIE_CATEGORIES.map((cat) => <MovieSlider key={cat} category={cat} />)
+					: TV_CATEGORIES.map((cat) => <MovieSlider key={cat} category={cat} />)}
 			</div>
-		</>
+		</div>
 	);
 };
+
 export default HomeScreen;

@@ -2,51 +2,92 @@
 @tailwind components;
 @tailwind utilities;
 
-.hero-bg {
-	background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.1)), url("/hero.png");
+/* ─── Design tokens ──────────────────────────────────────────────────────── */
+:root {
+	--clr-bg: #0a0a0a;
+	--clr-surface: #141414;
+	--clr-surface-2: #1f1f1f;
+	--clr-border: rgba(255,255,255,0.08);
+	--clr-accent: #e50914;
+	--clr-accent-hover: #f40612;
+	--clr-text: #e5e5e5;
+	--clr-text-muted: #a3a3a3;
+	--radius-card: 6px;
+	--shadow-card: 0 4px 24px rgba(0,0,0,0.6);
+	--transition-std: 200ms ease;
 }
 
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
+body {
+	background-color: var(--clr-bg);
+	color: var(--clr-text);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* ─── Custom scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3f3f3f; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Shimmer skeleton ───────────────────────────────────────────────────── */
 .shimmer {
-	animation: shimmer 2s infinite linear;
-	background: linear-gradient(to right, #2c2c2c 4%, #333 25%, #2c2c2c 36%);
-	background-size: 1000px 100%;
+	background: linear-gradient(90deg, #1a1a1a 25%, #252525 50%, #1a1a1a 75%);
+	background-size: 400% 100%;
+	animation: shimmer 1.4s ease-in-out infinite;
 }
-
 @keyframes shimmer {
-	0% {
-		background-position: -1000px 0;
-	}
-	100% {
-		background-position: 1000px 0;
-	}
+	0%   { background-position: 100% 50%; }
+	100% { background-position: 0%   50%; }
 }
 
-.error-page--content::before {
-	background: radial-gradient(
-		ellipse at center,
-		rgba(0, 0, 0, 0.5) 0,
-		rgba(0, 0, 0, 0.2) 45%,
-		rgba(0, 0, 0, 0.1) 55%,
-		transparent 70%
+/* ─── Hero gradient ──────────────────────────────────────────────────────── */
+.hero-gradient {
+	background: linear-gradient(
+		to right,
+		rgba(0,0,0,0.85) 0%,
+		rgba(0,0,0,0.6)  40%,
+		rgba(0,0,0,0.1)  70%,
+		transparent      100%
 	);
-	bottom: -10vw;
-	content: "";
-	left: 10vw;
-	position: absolute;
-	right: 10vw;
-	top: -10vw;
-	z-index: -1;
+}
+.hero-bottom-fade {
+	background: linear-gradient(to top, #0a0a0a 0%, rgba(10,10,10,0.6) 60%, transparent 100%);
 }
 
-::-webkit-scrollbar {
-	width: 8px;
+/* ─── Card hover ─────────────────────────────────────────────────────────── */
+.card-hover {
+	transition: transform var(--transition-std), box-shadow var(--transition-std);
+}
+.card-hover:hover {
+	transform: scale(1.04);
+	box-shadow: var(--shadow-card);
+	z-index: 10;
 }
 
-::-webkit-scrollbar-thumb {
-	background-color: #4b5563;
-	border-radius: 6px;
+/* ─── Navbar transparent → dark ─────────────────────────────────────────── */
+.navbar-transparent { background: transparent; }
+.navbar-dark {
+	background: linear-gradient(to bottom, rgba(10,10,10,0.98), rgba(10,10,10,0.95));
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
 }
 
-::-webkit-scrollbar-track {
-	background-color: #1a202c;
+/* ─── Error page ─────────────────────────────────────────────────────────── */
+.error-page--content::before {
+	background: radial-gradient(ellipse at center,
+		rgba(0,0,0,.5) 0, rgba(0,0,0,.2) 45%, rgba(0,0,0,.1) 55%, transparent 70%);
+	bottom:-10vw; content:""; left:10vw; position:absolute;
+	right:10vw; top:-10vw; z-index:-1;
 }
+
+/* ─── Smooth page transitions ────────────────────────────────────────────── */
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(8px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.3s ease forwards; }
