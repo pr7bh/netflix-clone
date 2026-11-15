@@ -2,7 +2,7 @@ services:
   - type: web
     name: netflix-clone-api
     runtime: node
-    buildCommand: npm install
+    buildCommand: npm install && npx patch-package
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
